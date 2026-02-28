@@ -42,11 +42,25 @@ $router->get('/api/health', static function (): void {
 
 $router->get('/api/docs', static function (): void {
     header('Content-Type: text/html; charset=utf-8');
-    echo file_get_contents(__DIR__ . '/swagger-ui.html');
+    $spec = require __DIR__ . '/../config/openapi.php';
+    $specJson = json_encode($spec, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    $html = file_get_contents(__DIR__ . '/swagger-ui.html');
+    // Embed spec so Swagger UI doesn't need a separate request (avoids 404 on Railway/proxies)
+    $html = str_replace(
+        '</head>',
+        '<script>window.OPENAPI_SPEC = ' . $specJson . ';</script></head>',
+        $html
+    );
+    echo $html;
     exit;
 });
 
 $router->get('/api/openapi.json', static function (): void {
+    $spec = require __DIR__ . '/../config/openapi.php';
+    Response::json($spec);
+});
+
+$router->get('/openapi.json', static function (): void {
     $spec = require __DIR__ . '/../config/openapi.php';
     Response::json($spec);
 });

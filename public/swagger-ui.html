@@ -11,17 +11,21 @@
   <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js" crossorigin></script>
   <script>
     window.onload = function () {
-      // Resolve spec URL relative to current path (works with base path e.g. /api)
-      const specUrl = new URL('openapi.json', window.location.href).href;
-      window.ui = SwaggerUIBundle({
-        url: specUrl,
+      // Use embedded spec if provided by server (avoids 404 on Railway/proxies); else fetch from URL
+      const config = {
         dom_id: '#swagger-ui',
         presets: [
           SwaggerUIBundle.presets.apis,
           SwaggerUIBundle.SwaggerUIStandalonePreset
         ],
         layout: 'BaseLayout'
-      });
+      };
+      if (window.OPENAPI_SPEC) {
+        config.spec = window.OPENAPI_SPEC;
+      } else {
+        config.url = new URL('openapi.json', window.location.href).href;
+      }
+      window.ui = SwaggerUIBundle(config);
     };
   </script>
 </body>
