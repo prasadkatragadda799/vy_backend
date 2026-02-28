@@ -1,5 +1,6 @@
 # Render-ready PHP API (PHP built-in server on PORT)
-FROM php:8.2-slim
+# Use -cli-bookworm; php:8.2-slim can be missing on some registries
+FROM php:8.2-cli-bookworm
 
 # PDO MySQL for external DB; SQLite is included in PHP
 RUN apt-get update && apt-get install -y --no-install-recommends default-libmysqlclient-dev \
