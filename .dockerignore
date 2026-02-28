@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+storage/uploads/*
+storage/*.db
+vendor
+node_modules
+*.md
+.DS_Store

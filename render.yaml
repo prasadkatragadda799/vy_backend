@@ -1,0 +1,30 @@
+# Render Blueprint — one-click deploy
+# Docs: https://render.com/docs/blueprint-spec
+#
+# 1. Connect your repo in Render Dashboard.
+# 2. New > Blueprint > connect repo and select this file (or create Web Service manually).
+# 3. Set DB_* env vars in the service Environment tab (sync: false placeholders).
+# 4. Deploy. Health check: GET /api/health
+
+services:
+  - type: web
+    name: yoga-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_DRIVER
+        value: mysql
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_CHARSET
+        value: utf8mb4
+      - key: DB_HOST
+        sync: false
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false

@@ -1,0 +1,7 @@
+/storage/uploads/
+/storage/uploads/donations/
+/storage/uploads/registrations/
+/storage/*.db
+vendor/
+.env
+.env.local

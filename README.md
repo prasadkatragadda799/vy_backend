@@ -79,6 +79,11 @@ Copy `.env.example` to `.env` and set values. All config can also be set via env
 
 Tip: to avoid double `/api`, keep project in root and call `/api/*`.
 
+## API docs (Swagger)
+
+- **Swagger UI:** `GET /api/docs` — interactive API documentation and try-it-out.
+- **OpenAPI 3.0 spec:** `GET /api/openapi.json` — machine-readable schema.
+
 ## APIs
 
 ### Health
