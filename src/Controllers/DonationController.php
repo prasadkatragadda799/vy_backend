@@ -22,6 +22,7 @@ final class DonationController
         $validated = Validator::validate($request->body, [
             'name' => 'required',
             'mobile' => 'required|mobile',
+            'aadhaar_number' => 'required|aadhaar',
             'amount_paid' => 'required|numeric',
         ]);
         $validated['transaction_id'] = isset($request->body['transaction_id']) ? trim((string) $request->body['transaction_id']) : null;

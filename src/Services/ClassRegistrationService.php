@@ -43,12 +43,16 @@ final class ClassRegistrationService
             throw new HttpException('Selected class is invalid.', 404);
         }
 
-        $alreadyPaid = $this->paymentRepository->totalPaidByMobileAndClass($payload['mobile'], $classId);
+        $aadhaarNumber = (string) ($payload['aadhaar_number'] ?? '');
+        if ($aadhaarNumber === '') {
+            throw new HttpException('Aadhaar number is required.', 422);
+        }
+        $alreadyPaid = $this->paymentRepository->totalPaidByAadhaarAndClass($aadhaarNumber, $classId);
         $totalFee = (float) $class['total_fee'];
         $remainingBefore = max($totalFee - $alreadyPaid, 0);
 
         if ($remainingBefore <= 0) {
-            throw new HttpException('Class fee is already fully paid for this mobile number.', 409);
+            throw new HttpException('Class fee is already fully paid for this Aadhaar number.', 409);
         }
 
         if ($amount > $remainingBefore) {
@@ -65,6 +69,7 @@ final class ClassRegistrationService
 
         $paymentId = $this->paymentRepository->create([
             'mobile' => $payload['mobile'],
+            'aadhaar_number' => $aadhaarNumber,
             'name' => $payload['name'],
             'email' => $payload['email'] ?? null,
             'class_id' => $classId,

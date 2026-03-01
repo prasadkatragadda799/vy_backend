@@ -30,6 +30,7 @@ final class ClassRegistrationController
         $validated = Validator::validate($request->body, [
             'name' => 'required',
             'mobile' => 'required|mobile',
+            'aadhaar_number' => 'required|aadhaar',
             'class_id' => 'required|numeric',
             'amount_paid' => 'required|numeric',
             'email' => 'email_optional',

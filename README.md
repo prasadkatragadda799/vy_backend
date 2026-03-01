@@ -6,7 +6,7 @@ Production-style layered PHP backend with:
 - `Services` (business rules)
 - `Repositories` (database access)
 - Validation + centralized exception handling
-- Partial payment flow for class fees by same mobile number
+- Partial payment flow for class fees by person (Aadhaar number); same mobile can have multiple persons
 
 ## Deploy targets
 
@@ -128,12 +128,15 @@ Allowed file types: **JPEG, PNG, WebP, PDF**. Max **5 MB** per file. Files are s
 
 Logic:
 
+- Users are identified by **Aadhaar number** (and class). Same mobile number can be used by multiple people (e.g. family); each person has a separate payment state per class.
 - First payment can be partial (e.g. fee 5000, paid 500).
-- Next submission with same `mobile` and same `class_id` reduces the remaining fee.
+- Next submission with same `aadhaar_number` and same `class_id` reduces the remaining fee for that person.
 - Overpayment is rejected. Status returned as `partial` or `paid`.
 
 ### Payment summary by mobile
 - `GET /api/classes/payment-summary?mobile=9876543210`
+
+Returns one row per person (Aadhaar) per class for that mobile; each row includes `aadhaar_number`, `class_id`, `paid_amount`, `remaining_amount`, and `payment_status`.
 
 ### Donation submit (with documents)
 - `POST /api/donations`
@@ -177,3 +180,8 @@ If you created tables before adding new columns, run the matching migration in y
 
 - **SQLite:** `database/migrations/add_transaction_receipt_registration_sqlite.sql`
 - **MySQL:** `database/migrations/add_transaction_receipt_registration_mysql.sql`
+
+**Aadhaar number (class_payments and donations)**
+
+- **SQLite:** `database/migrations/add_aadhaar_number_sqlite.sql`
+- **MySQL:** `database/migrations/add_aadhaar_number_mysql.sql`

@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS classes (
 CREATE TABLE IF NOT EXISTS class_payments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     mobile TEXT NOT NULL,
+    aadhaar_number TEXT NOT NULL,
     name TEXT NOT NULL,
     email TEXT NULL,
     class_id INTEGER NOT NULL,
@@ -30,10 +31,14 @@ CREATE TABLE IF NOT EXISTS class_payments (
 CREATE INDEX IF NOT EXISTS idx_class_payments_mobile_class
 ON class_payments (mobile, class_id);
 
+CREATE INDEX IF NOT EXISTS idx_class_payments_aadhaar_class
+ON class_payments (aadhaar_number, class_id);
+
 CREATE TABLE IF NOT EXISTS donations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     mobile TEXT NOT NULL,
+    aadhaar_number TEXT NOT NULL,
     amount_paid NUMERIC NOT NULL CHECK(amount_paid > 0),
     transaction_id TEXT NULL,
     aadhaar_front_path TEXT NULL,
@@ -44,3 +49,6 @@ CREATE TABLE IF NOT EXISTS donations (
 
 CREATE INDEX IF NOT EXISTS idx_donations_mobile
 ON donations (mobile);
+
+CREATE INDEX IF NOT EXISTS idx_donations_aadhaar
+ON donations (aadhaar_number);

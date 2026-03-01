@@ -34,6 +34,7 @@ final class DonationService
         $id = $this->donationRepository->create([
             'name' => $payload['name'],
             'mobile' => $payload['mobile'],
+            'aadhaar_number' => (string) $payload['aadhaar_number'],
             'amount_paid' => $amount,
             'transaction_id' => $payload['transaction_id'] ?? null,
             'aadhaar_front_path' => $docPaths['aadhaar_front_path'],

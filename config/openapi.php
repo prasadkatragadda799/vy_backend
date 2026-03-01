@@ -54,10 +54,11 @@ $paths['/api/classes/register-payment'] = [
                 'multipart/form-data' => [
                     'schema' => [
                         'type' => 'object',
-                        'required' => ['name', 'mobile', 'class_id', 'amount_paid', 'aadhaar_doc', 'aadhaar_doc_back', 'transaction_receipt_image'],
+                        'required' => ['name', 'mobile', 'aadhaar_number', 'class_id', 'amount_paid', 'aadhaar_doc', 'aadhaar_doc_back', 'transaction_receipt_image'],
                         'properties' => [
                             'name' => ['type' => 'string'],
                             'mobile' => ['type' => 'string'],
+                            'aadhaar_number' => ['type' => 'string', 'description' => '12-digit Aadhaar number (identifies the person; same mobile can have multiple persons)'],
                             'email' => ['type' => 'string'],
                             'class_id' => ['type' => 'integer'],
                             'preferred_time' => ['type' => 'string'],
@@ -83,6 +84,7 @@ $paths['/api/classes/payment-summary'] = [
     'get' => [
         'summary' => 'Payment summary by mobile',
         'operationId' => 'paymentSummary',
+        'description' => 'Returns one row per person (Aadhaar) per class for the given mobile. Same mobile can have multiple persons with separate payment state.',
         'parameters' => [['name' => 'mobile', 'in' => 'query', 'required' => true, 'schema' => ['type' => 'string']]],
         'responses' => ['200' => ['description' => 'OK'], '422' => ['description' => 'Missing mobile']],
     ],
@@ -98,10 +100,11 @@ $paths['/api/donations'] = [
                 'multipart/form-data' => [
                     'schema' => [
                         'type' => 'object',
-                        'required' => ['name', 'mobile', 'amount_paid', 'aadhaar_front_doc', 'aadhaar_back_doc', 'transaction_rep_doc'],
+                        'required' => ['name', 'mobile', 'aadhaar_number', 'amount_paid', 'aadhaar_front_doc', 'aadhaar_back_doc', 'transaction_rep_doc'],
                         'properties' => [
                             'name' => ['type' => 'string'],
                             'mobile' => ['type' => 'string'],
+                            'aadhaar_number' => ['type' => 'string', 'description' => '12-digit Aadhaar number'],
                             'amount_paid' => ['type' => 'number'],
                             'transaction_id' => ['type' => 'string'],
                             'aadhaar_front_doc' => ['type' => 'string', 'format' => 'binary'],

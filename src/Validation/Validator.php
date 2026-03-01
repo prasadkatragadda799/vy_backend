@@ -37,8 +37,18 @@ final class Validator
                 if ($rule === 'email_optional' && $value !== null && $value !== '' && !filter_var((string) $value, FILTER_VALIDATE_EMAIL)) {
                     $errors[$field][] = 'Invalid email.';
                 }
+
+                if ($rule === 'aadhaar' && $value !== null && $value !== '') {
+                    $digits = preg_replace('/\D/', '', (string) $value);
+                    if (strlen($digits) !== 12) {
+                        $errors[$field][] = 'Aadhaar number must be 12 digits.';
+                    }
+                }
             }
 
+            if (in_array('aadhaar', $rulesArray, true) && is_string($value) && $value !== '') {
+                $value = preg_replace('/\D/', '', trim($value));
+            }
             $clean[$field] = is_string($value) ? trim($value) : $value;
         }
 
