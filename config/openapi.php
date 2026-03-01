@@ -96,7 +96,7 @@ return [
                     ],
                 ],
             ],
-            ],
+        ],
         'post' => [
                 'summary' => 'Create class',
                 'description' => 'Create a new class with name and amount (total_fee).',

@@ -44,16 +44,29 @@ $router->get('/api/health', static function (): void {
 
 $router->get('/api/docs', static function (): void {
     header('Content-Type: text/html; charset=utf-8');
-    $spec = require __DIR__ . '/../config/openapi.php';
-    $specJson = json_encode($spec, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-    $html = file_get_contents(__DIR__ . '/swagger-ui.html');
-    // Embed spec so Swagger UI doesn't need a separate request (avoids 404 on Railway/proxies)
-    $html = str_replace(
-        '</head>',
-        '<script>window.OPENAPI_SPEC = ' . $specJson . ';</script></head>',
-        $html
-    );
-    echo $html;
+    try {
+        $spec = require __DIR__ . '/../config/openapi.php';
+        $specJson = json_encode($spec, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($specJson === false) {
+            throw new RuntimeException('Failed to encode OpenAPI spec: ' . json_last_error_msg());
+        }
+        $htmlPath = __DIR__ . '/swagger-ui.html';
+        if (!is_file($htmlPath)) {
+            throw new RuntimeException('swagger-ui.html not found at ' . $htmlPath);
+        }
+        $html = file_get_contents($htmlPath);
+        $html = str_replace(
+            '</head>',
+            '<script>window.OPENAPI_SPEC = ' . $specJson . ';</script></head>',
+            $html
+        );
+        echo $html;
+    } catch (Throwable $e) {
+        http_response_code(500);
+        echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Docs Error</title></head><body><h1>Error loading API docs</h1><pre>'
+            . htmlspecialchars($e->getMessage() . "\n\n" . $e->getTraceAsString(), ENT_QUOTES, 'UTF-8')
+            . '</pre></body></html>';
+    }
     exit;
 });
 
