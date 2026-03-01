@@ -58,8 +58,8 @@ final class ClassRegistrationService
         $remainingAfter = $remainingBefore - $amount;
         $status = $remainingAfter > 0 ? 'partial' : 'paid';
 
-        $docPaths = ['aadhaar_doc_path' => null, 'aadhaar_doc_back_path' => null];
-        if (isset($files['aadhaar_doc'], $files['aadhaar_doc_back'])) {
+        $docPaths = ['aadhaar_doc_path' => null, 'aadhaar_doc_back_path' => null, 'transaction_receipt_path' => null];
+        if (isset($files['aadhaar_doc'], $files['aadhaar_doc_back'], $files['transaction_receipt_image'])) {
             $docPaths = $this->fileUpload->processRegistrationDocs($files);
         }
 
@@ -77,6 +77,7 @@ final class ClassRegistrationService
             'transaction_msg' => $payload['transaction_msg'] ?? null,
             'aadhaar_doc_path' => $docPaths['aadhaar_doc_path'],
             'aadhaar_doc_back_path' => $docPaths['aadhaar_doc_back_path'],
+            'transaction_receipt_path' => $docPaths['transaction_receipt_path'],
             'payment_status' => $status,
         ]);
 

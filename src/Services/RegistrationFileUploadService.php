@@ -12,6 +12,7 @@ final class RegistrationFileUploadService
     private const UPLOAD_KEYS = [
         'aadhaar_doc' => 'aadhaar_doc_path',
         'aadhaar_doc_back' => 'aadhaar_doc_back_path',
+        'transaction_receipt_image' => 'transaction_receipt_path',
     ];
 
     public function __construct(
@@ -33,9 +34,9 @@ final class RegistrationFileUploadService
     }
 
     /**
-     * Validate and store registration Aadhaar docs.
+     * Validate and store registration docs (Aadhaar + transaction receipt).
      * @param array<string, array{name: string, type: string, tmp_name: string, error: int, size: int}> $files
-     * @return array{aadhaar_doc_path: string|null, aadhaar_doc_back_path: string|null}
+     * @return array{aadhaar_doc_path: string|null, aadhaar_doc_back_path: string|null, transaction_receipt_path: string|null}
      */
     public function processRegistrationDocs(array $files): array
     {
@@ -47,6 +48,7 @@ final class RegistrationFileUploadService
         $result = [
             'aadhaar_doc_path' => null,
             'aadhaar_doc_back_path' => null,
+            'transaction_receipt_path' => null,
         ];
 
         foreach (self::UPLOAD_KEYS as $formKey => $pathKey) {

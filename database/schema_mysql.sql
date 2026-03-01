@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS class_payments (
     transaction_msg VARCHAR(500) NULL,
     aadhaar_doc_path VARCHAR(500) NULL,
     aadhaar_doc_back_path VARCHAR(500) NULL,
+    transaction_receipt_path VARCHAR(500) NULL,
     payment_status ENUM('partial', 'paid') NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_class_payments_class_id

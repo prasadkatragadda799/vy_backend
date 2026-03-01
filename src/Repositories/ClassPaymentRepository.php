@@ -32,8 +32,8 @@ final class ClassPaymentRepository
     public function create(array $data): int
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO class_payments (mobile, name, email, class_id, preferred_time, location, siblings_name, message, amount_paid, transaction_id, transaction_msg, aadhaar_doc_path, aadhaar_doc_back_path, payment_status)
-             VALUES (:mobile, :name, :email, :class_id, :preferred_time, :location, :siblings_name, :message, :amount_paid, :transaction_id, :transaction_msg, :aadhaar_doc_path, :aadhaar_doc_back_path, :payment_status)'
+            'INSERT INTO class_payments (mobile, name, email, class_id, preferred_time, location, siblings_name, message, amount_paid, transaction_id, transaction_msg, aadhaar_doc_path, aadhaar_doc_back_path, transaction_receipt_path, payment_status)
+             VALUES (:mobile, :name, :email, :class_id, :preferred_time, :location, :siblings_name, :message, :amount_paid, :transaction_id, :transaction_msg, :aadhaar_doc_path, :aadhaar_doc_back_path, :transaction_receipt_path, :payment_status)'
         );
         $stmt->execute([
             'mobile' => $data['mobile'],
@@ -49,6 +49,7 @@ final class ClassPaymentRepository
             'transaction_msg' => $data['transaction_msg'] ?? null,
             'aadhaar_doc_path' => $data['aadhaar_doc_path'] ?? null,
             'aadhaar_doc_back_path' => $data['aadhaar_doc_back_path'] ?? null,
+            'transaction_receipt_path' => $data['transaction_receipt_path'] ?? null,
             'payment_status' => $data['payment_status'],
         ]);
 

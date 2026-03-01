@@ -108,7 +108,7 @@ return [
                         'multipart/form-data' => [
                             'schema' => [
                                 'type' => 'object',
-                                'required' => ['name', 'mobile', 'class_id', 'amount_paid', 'aadhaar_doc', 'aadhaar_doc_back'],
+                                'required' => ['name', 'mobile', 'class_id', 'amount_paid', 'aadhaar_doc', 'aadhaar_doc_back', 'transaction_receipt_image'],
                                 'properties' => [
                                     'name' => ['type' => 'string', 'description' => 'Full name'],
                                     'mobile' => ['type' => 'string', 'description' => '10–15 digits', 'example' => '9876543210'],
@@ -123,6 +123,7 @@ return [
                                     'amount_paid' => ['type' => 'number', 'description' => 'Amount paid (can be partial)'],
                                     'aadhaar_doc' => ['type' => 'string', 'format' => 'binary', 'description' => 'Aadhaar front (JPEG, PNG, WebP, PDF, max 5MB)'],
                                     'aadhaar_doc_back' => ['type' => 'string', 'format' => 'binary', 'description' => 'Aadhaar back (JPEG, PNG, WebP, PDF, max 5MB)'],
+                                    'transaction_receipt_image' => ['type' => 'string', 'format' => 'binary', 'description' => 'Transaction receipt image (JPEG, PNG, WebP, PDF, max 5MB)'],
                                 ],
                             ],
                         ],

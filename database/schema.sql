@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS class_payments (
     transaction_msg TEXT NULL,
     aadhaar_doc_path TEXT NULL,
     aadhaar_doc_back_path TEXT NULL,
+    transaction_receipt_path TEXT NULL,
     payment_status TEXT NOT NULL CHECK(payment_status IN ('partial', 'paid')),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (class_id) REFERENCES classes(id)

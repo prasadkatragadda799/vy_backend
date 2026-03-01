@@ -95,7 +95,7 @@ Tip: to avoid double `/api`, keep project in root and call `/api/*`.
 ### Class registration (with partial payment)
 - `POST /api/classes/register-payment`
 
-Use **multipart/form-data** so you can send the two Aadhaar documents. Required fields:
+Use **multipart/form-data** so you can send Aadhaar documents and transaction receipt. Required fields:
 
 | Field | Type | Required |
 |-------|------|----------|
@@ -112,8 +112,9 @@ Use **multipart/form-data** so you can send the two Aadhaar documents. Required 
 | `amount_paid` | number | Yes |
 | `aadhaar_doc` | file | Yes (front) |
 | `aadhaar_doc_back` | file | Yes (back) |
+| `transaction_receipt_image` | file | Yes (receipt/screenshot) |
 
-Allowed file types for Aadhaar: **JPEG, PNG, WebP, PDF**. Max **5 MB** per file. Files are stored under `storage/uploads/registrations/`.
+Allowed file types: **JPEG, PNG, WebP, PDF**. Max **5 MB** per file. Files are stored under `storage/uploads/registrations/`.
 
 Logic:
 
@@ -161,3 +162,8 @@ If you created tables before adding new columns, run the matching migration in y
 
 - **SQLite:** `database/migrations/add_registration_fields_sqlite.sql`
 - **MySQL:** `database/migrations/add_registration_fields_mysql.sql`
+
+**Transaction receipt image (registration)**
+
+- **SQLite:** `database/migrations/add_transaction_receipt_registration_sqlite.sql`
+- **MySQL:** `database/migrations/add_transaction_receipt_registration_mysql.sql`

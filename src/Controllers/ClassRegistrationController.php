@@ -48,11 +48,15 @@ final class ClassRegistrationController
         $files = $request->files;
         $aadhaarFront = $files['aadhaar_doc'] ?? null;
         $aadhaarBack = $files['aadhaar_doc_back'] ?? null;
+        $transactionReceipt = $files['transaction_receipt_image'] ?? null;
         if (!$aadhaarFront || $aadhaarFront['error'] === UPLOAD_ERR_NO_FILE || $aadhaarFront['tmp_name'] === '') {
             throw new HttpException('Aadhaar document (front) is required.', 422);
         }
         if (!$aadhaarBack || $aadhaarBack['error'] === UPLOAD_ERR_NO_FILE || $aadhaarBack['tmp_name'] === '') {
             throw new HttpException('Aadhaar document (back) is required.', 422);
+        }
+        if (!$transactionReceipt || $transactionReceipt['error'] === UPLOAD_ERR_NO_FILE || $transactionReceipt['tmp_name'] === '') {
+            throw new HttpException('Transaction receipt image is required.', 422);
         }
 
         $result = $this->service->registerPayment($validated, $files);
