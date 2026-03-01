@@ -96,7 +96,7 @@ return [
                     ],
                 ],
             ],
-        ],
+            ],
         'post' => [
                 'summary' => 'Create class',
                 'description' => 'Create a new class with name and amount (total_fee).',
@@ -193,6 +193,7 @@ return [
                     '422' => ['description' => 'Validation failed'],
                 ],
             ],
+        ],
         ],
         '/api/classes/register-payment' => [
             'post' => [
