@@ -91,4 +91,23 @@ final class ClassRepository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
     }
+
+    public function countActive(): int
+    {
+        $stmt = $this->pdo->query('SELECT COUNT(*) AS c FROM classes WHERE is_active = 1');
+        return (int) ($stmt->fetch()['c'] ?? 0);
+    }
+
+    /** Admin: course distribution - each class with enrollment count (distinct aadhaar per class). */
+    public function courseDistribution(): array
+    {
+        $stmt = $this->pdo->query(
+            'SELECT c.id AS class_id, c.class_name,
+                    (SELECT COUNT(DISTINCT cp2.aadhaar_number) FROM class_payments cp2 WHERE cp2.class_id = c.id) AS enrollment_count
+             FROM classes c
+             WHERE c.is_active = 1
+             ORDER BY c.id ASC'
+        );
+        return $stmt->fetchAll();
+    }
 }

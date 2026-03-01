@@ -55,4 +55,9 @@ final class DonationService
     {
         return $this->donationRepository->listByMobile($mobile);
     }
+
+    public function listByMobileAndAadhaar(string $mobile, string $aadhaarNumber): array
+    {
+        return $this->donationRepository->listByMobileAndAadhaar($mobile, $aadhaarNumber);
+    }
 }

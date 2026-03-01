@@ -72,13 +72,45 @@ final class ClassRegistrationController
     public function paymentSummary(Request $request): void
     {
         $mobile = trim((string) ($request->query['mobile'] ?? ''));
+        $aadhaarNumber = trim((string) ($request->query['aadhaar_number'] ?? ''));
+        $aadhaarNumber = $aadhaarNumber !== '' ? preg_replace('/\D/', '', $aadhaarNumber) : '';
         if ($mobile === '') {
             throw new HttpException('Query param "mobile" is required.', 422);
+        }
+        if ($aadhaarNumber === '') {
+            throw new HttpException('Query param "aadhaar_number" is required.', 422);
+        }
+        if (strlen($aadhaarNumber) !== 12) {
+            throw new HttpException('Query param "aadhaar_number" must be 12 digits.', 422);
         }
 
         Response::json([
             'success' => true,
-            'data' => $this->service->mobileSummary($mobile),
+            'data' => $this->service->summaryByMobileAndAadhaar($mobile, $aadhaarNumber),
+        ]);
+    }
+
+    /** Admin: set negotiated/agreed fee for a specific user (aadhaar) and class. */
+    public function putAgreedFee(Request $request): void
+    {
+        $validated = Validator::validate($request->body ?? [], [
+            'aadhaar_number' => 'required|aadhaar',
+            'class_id' => 'required|numeric',
+            'agreed_fee' => 'required|numeric',
+        ]);
+        $agreedFee = (float) $validated['agreed_fee'];
+        if ($agreedFee <= 0) {
+            throw new HttpException('Agreed fee must be greater than zero.', 422);
+        }
+        $result = $this->service->setAgreedFee(
+            $validated['aadhaar_number'],
+            (int) $validated['class_id'],
+            $agreedFee
+        );
+        Response::json([
+            'success' => true,
+            'message' => 'Agreed fee updated.',
+            'data' => $result,
         ]);
     }
 }

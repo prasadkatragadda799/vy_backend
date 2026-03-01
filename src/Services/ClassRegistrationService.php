@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Core\HttpException;
 use App\Repositories\ClassPaymentRepository;
 use App\Repositories\ClassRepository;
+use App\Repositories\ClassUserFeeRepository;
 
 final class ClassRegistrationService
 {
@@ -15,6 +16,7 @@ final class ClassRegistrationService
     public function __construct(
         private readonly ClassRepository $classRepository = new ClassRepository(),
         private readonly ClassPaymentRepository $paymentRepository = new ClassPaymentRepository(),
+        private readonly ClassUserFeeRepository $userFeeRepository = new ClassUserFeeRepository(),
         ?RegistrationFileUploadService $fileUpload = null
     ) {
         $this->fileUpload = $fileUpload ?? RegistrationFileUploadService::fromConfig();
@@ -47,9 +49,11 @@ final class ClassRegistrationService
         if ($aadhaarNumber === '') {
             throw new HttpException('Aadhaar number is required.', 422);
         }
+        $this->userFeeRepository->ensureAgreedFee($aadhaarNumber, $classId, (float) $class['total_fee']);
+        $agreedFee = $this->userFeeRepository->getAgreedFee($aadhaarNumber, $classId)
+            ?? (float) $class['total_fee'];
         $alreadyPaid = $this->paymentRepository->totalPaidByAadhaarAndClass($aadhaarNumber, $classId);
-        $totalFee = (float) $class['total_fee'];
-        $remainingBefore = max($totalFee - $alreadyPaid, 0);
+        $remainingBefore = max($agreedFee - $alreadyPaid, 0);
 
         if ($remainingBefore <= 0) {
             throw new HttpException('Class fee is already fully paid for this Aadhaar number.', 409);
@@ -90,7 +94,7 @@ final class ClassRegistrationService
             'payment_id' => $paymentId,
             'class_id' => $classId,
             'class_name' => $class['class_name'],
-            'total_fee' => $totalFee,
+            'agreed_fee' => $agreedFee,
             'amount_paid_now' => $amount,
             'paid_till_now' => $alreadyPaid + $amount,
             'remaining_amount' => $remainingAfter,
@@ -106,5 +110,40 @@ final class ClassRegistrationService
         }
 
         return $rows;
+    }
+
+    public function summaryByMobileAndAadhaar(string $mobile, string $aadhaarNumber): array
+    {
+        $rows = $this->paymentRepository->summaryByMobileAndAadhaar($mobile, $aadhaarNumber);
+        foreach ($rows as &$row) {
+            $row['payment_status'] = ((float) $row['remaining_amount'] <= 0) ? 'paid' : 'partial_or_unpaid';
+            $row['pending_amount'] = max((float) $row['remaining_amount'], 0);
+        }
+
+        return $rows;
+    }
+
+    /** Admin: set negotiated/agreed fee for a specific user (aadhaar) and class. */
+    public function setAgreedFee(string $aadhaarNumber, int $classId, float $agreedFee): array
+    {
+        if ($agreedFee <= 0) {
+            throw new HttpException('Agreed fee must be greater than zero.', 422);
+        }
+        $class = $this->classRepository->findById($classId);
+        if ($class === null) {
+            throw new HttpException('Class not found.', 404);
+        }
+        $this->userFeeRepository->setAgreedFee($aadhaarNumber, $classId, $agreedFee);
+        $alreadyPaid = $this->paymentRepository->totalPaidByAadhaarAndClass($aadhaarNumber, $classId);
+        $remaining = max($agreedFee - $alreadyPaid, 0);
+
+        return [
+            'aadhaar_number' => $aadhaarNumber,
+            'class_id' => $classId,
+            'class_name' => $class['class_name'],
+            'agreed_fee' => $agreedFee,
+            'paid_so_far' => $alreadyPaid,
+            'remaining_amount' => $remaining,
+        ];
     }
 }

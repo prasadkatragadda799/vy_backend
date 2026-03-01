@@ -44,6 +44,31 @@ $paths['/api/classes'] = [
     ],
 ];
 
+$paths['/api/classes/agreed-fee'] = [
+    'put' => [
+        'summary' => 'Admin: set agreed/negotiated fee for a user and class',
+        'operationId' => 'putAgreedFee',
+        'description' => 'Set or update the agreed fee for a specific person (Aadhaar) and class. Used when the user negotiates the price; remaining and pending amount are computed from this agreed fee.',
+        'requestBody' => [
+            'required' => true,
+            'content' => [
+                'application/json' => [
+                    'schema' => [
+                        'type' => 'object',
+                        'required' => ['aadhaar_number', 'class_id', 'agreed_fee'],
+                        'properties' => [
+                            'aadhaar_number' => ['type' => 'string', 'description' => '12-digit Aadhaar number'],
+                            'class_id' => ['type' => 'integer'],
+                            'agreed_fee' => ['type' => 'number', 'minimum' => 0.01, 'description' => 'Negotiated/agreed fee for this user and class'],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        'responses' => ['200' => ['description' => 'OK'], '404' => ['description' => 'Class not found'], '422' => ['description' => 'Validation failed']],
+    ],
+];
+
 $paths['/api/classes/register-payment'] = [
     'post' => [
         'summary' => 'Register class & record payment',
@@ -82,11 +107,14 @@ $paths['/api/classes/register-payment'] = [
 
 $paths['/api/classes/payment-summary'] = [
     'get' => [
-        'summary' => 'Payment summary by mobile',
+        'summary' => 'User: pending amount and payment summary by mobile and Aadhaar',
         'operationId' => 'paymentSummary',
-        'description' => 'Returns one row per person (Aadhaar) per class for the given mobile. Same mobile can have multiple persons with separate payment state.',
-        'parameters' => [['name' => 'mobile', 'in' => 'query', 'required' => true, 'schema' => ['type' => 'string']]],
-        'responses' => ['200' => ['description' => 'OK'], '422' => ['description' => 'Missing mobile']],
+        'description' => 'Returns class payment summary for the given person (mobile + Aadhaar). One row per class they have registered for. Each row includes agreed_fee (negotiated price for that user), paid_amount, remaining_amount, pending_amount (same as remaining), and payment_status. Use this so the user can see how much they have paid and how much is pending.',
+        'parameters' => [
+            ['name' => 'mobile', 'in' => 'query', 'required' => true, 'schema' => ['type' => 'string'], 'description' => 'Mobile number (10–15 digits)'],
+            ['name' => 'aadhaar_number', 'in' => 'query', 'required' => true, 'schema' => ['type' => 'string'], 'description' => '12-digit Aadhaar number'],
+        ],
+        'responses' => ['200' => ['description' => 'OK'], '422' => ['description' => 'Missing or invalid mobile / aadhaar_number']],
     ],
 ];
 
@@ -118,10 +146,112 @@ $paths['/api/donations'] = [
         'responses' => ['201' => ['description' => 'Created'], '422' => ['description' => 'Validation failed']],
     ],
     'get' => [
-        'summary' => 'Donation history by mobile',
+        'summary' => 'Donation history by mobile and Aadhaar',
         'operationId' => 'listDonations',
-        'parameters' => [['name' => 'mobile', 'in' => 'query', 'required' => true, 'schema' => ['type' => 'string']]],
-        'responses' => ['200' => ['description' => 'OK'], '422' => ['description' => 'Missing mobile']],
+        'description' => 'Returns donations for the given person (mobile + Aadhaar).',
+        'parameters' => [
+            ['name' => 'mobile', 'in' => 'query', 'required' => true, 'schema' => ['type' => 'string'], 'description' => 'Mobile number (10–15 digits)'],
+            ['name' => 'aadhaar_number', 'in' => 'query', 'required' => true, 'schema' => ['type' => 'string'], 'description' => '12-digit Aadhaar number'],
+        ],
+        'responses' => ['200' => ['description' => 'OK'], '422' => ['description' => 'Missing or invalid mobile / aadhaar_number']],
+    ],
+];
+
+$paths['/api/admin/dashboard'] = [
+    'get' => [
+        'summary' => 'Admin dashboard overview and payment summary',
+        'operationId' => 'adminDashboard',
+        'parameters' => [
+            ['name' => 'start_date', 'in' => 'query', 'required' => false, 'schema' => ['type' => 'string', 'format' => 'date'], 'description' => 'Filter by date (Y-m-d)'],
+            ['name' => 'end_date', 'in' => 'query', 'required' => false, 'schema' => ['type' => 'string', 'format' => 'date'], 'description' => 'Filter by date (Y-m-d)'],
+        ],
+        'responses' => ['200' => ['description' => 'Overview counts + payment summary (total_donations, total_collected, pending_amount, verified_donations_count)']],
+    ],
+];
+
+$paths['/api/admin/course-distribution'] = [
+    'get' => [
+        'summary' => 'Admin course distribution (enrollment count per class)',
+        'operationId' => 'adminCourseDistribution',
+        'responses' => ['200' => ['description' => 'List of classes with class_id, class_name, enrollment_count']],
+    ],
+];
+
+$paths['/api/admin/recent-activity'] = [
+    'get' => [
+        'summary' => 'Admin recent activity (registrations and donations)',
+        'operationId' => 'adminRecentActivity',
+        'parameters' => [['name' => 'limit', 'in' => 'query', 'schema' => ['type' => 'integer', 'default' => 20]]],
+        'responses' => ['200' => ['description' => 'Combined list with type (donation|registration), name, detail, status, created_at']],
+    ],
+];
+
+$paths['/api/admin/registrations'] = [
+    'get' => [
+        'summary' => 'Admin list all registrations (no mobile or Aadhaar required)',
+        'description' => 'Returns all registrations directly. No mobile number or Aadhaar needed; optional search and filters only.',
+        'operationId' => 'adminListRegistrations',
+        'parameters' => [
+            ['name' => 'search', 'in' => 'query', 'description' => 'Search by name, phone, course, location'],
+            ['name' => 'status', 'in' => 'query', 'schema' => ['type' => 'string', 'enum' => ['all', 'pending', 'partial', 'completed']]],
+            ['name' => 'limit', 'in' => 'query', 'schema' => ['type' => 'integer']],
+            ['name' => 'offset', 'in' => 'query', 'schema' => ['type' => 'integer']],
+            ['name' => 'start_date', 'in' => 'query', 'schema' => ['type' => 'string', 'format' => 'date']],
+            ['name' => 'end_date', 'in' => 'query', 'schema' => ['type' => 'string', 'format' => 'date']],
+        ],
+        'responses' => ['200' => ['description' => 'data (list), total']],
+    ],
+];
+
+$paths['/api/admin/donations'] = [
+    'get' => [
+        'summary' => 'Admin list all donations (no mobile or Aadhaar required)',
+        'description' => 'Returns all donations directly. No mobile number or Aadhaar needed; optional search and filters only.',
+        'operationId' => 'adminListDonations',
+        'parameters' => [
+            ['name' => 'search', 'in' => 'query', 'description' => 'Search by name, phone, transaction ID'],
+            ['name' => 'status', 'in' => 'query', 'schema' => ['type' => 'string', 'enum' => ['all', 'pending', 'verified', 'rejected']]],
+            ['name' => 'limit', 'in' => 'query', 'schema' => ['type' => 'integer']],
+            ['name' => 'offset', 'in' => 'query', 'schema' => ['type' => 'integer']],
+            ['name' => 'start_date', 'in' => 'query', 'schema' => ['type' => 'string', 'format' => 'date']],
+            ['name' => 'end_date', 'in' => 'query', 'schema' => ['type' => 'string', 'format' => 'date']],
+        ],
+        'responses' => ['200' => ['description' => 'data (list), total']],
+    ],
+];
+
+$paths['/api/admin/donations/summary'] = [
+    'get' => [
+        'summary' => 'Admin donations summary',
+        'operationId' => 'adminDonationsSummary',
+        'parameters' => [
+            ['name' => 'start_date', 'in' => 'query', 'schema' => ['type' => 'string', 'format' => 'date']],
+            ['name' => 'end_date', 'in' => 'query', 'schema' => ['type' => 'string', 'format' => 'date']],
+        ],
+        'responses' => ['200' => ['description' => 'total_amount, verified_count, pending_count, rejected_count']],
+    ],
+];
+
+$paths['/api/admin/donations/status'] = [
+    'put' => [
+        'summary' => 'Admin update donation status',
+        'operationId' => 'adminUpdateDonationStatus',
+        'requestBody' => [
+            'required' => true,
+            'content' => [
+                'application/json' => [
+                    'schema' => [
+                        'type' => 'object',
+                        'required' => ['id', 'status'],
+                        'properties' => [
+                            'id' => ['type' => 'integer', 'description' => 'Donation ID'],
+                            'status' => ['type' => 'string', 'enum' => ['pending', 'verified', 'rejected']],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        'responses' => ['200' => ['description' => 'Updated donation'], '404' => ['description' => 'Donation not found'], '422' => ['description' => 'Validation failed']],
     ],
 ];
 

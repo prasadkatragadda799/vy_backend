@@ -42,13 +42,21 @@ final class DonationController
     public function listByMobile(Request $request): void
     {
         $mobile = trim((string) ($request->query['mobile'] ?? ''));
+        $aadhaarNumber = trim((string) ($request->query['aadhaar_number'] ?? ''));
+        $aadhaarNumber = $aadhaarNumber !== '' ? preg_replace('/\D/', '', $aadhaarNumber) : '';
         if ($mobile === '') {
             throw new HttpException('Query param "mobile" is required.', 422);
+        }
+        if ($aadhaarNumber === '') {
+            throw new HttpException('Query param "aadhaar_number" is required.', 422);
+        }
+        if (strlen($aadhaarNumber) !== 12) {
+            throw new HttpException('Query param "aadhaar_number" must be 12 digits.', 422);
         }
 
         Response::json([
             'success' => true,
-            'data' => $this->service->listByMobile($mobile),
+            'data' => $this->service->listByMobileAndAadhaar($mobile, $aadhaarNumber),
         ]);
     }
 }

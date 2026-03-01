@@ -6,7 +6,8 @@ Production-style layered PHP backend with:
 - `Services` (business rules)
 - `Repositories` (database access)
 - Validation + centralized exception handling
-- Partial payment flow for class fees by person (Aadhaar number); same mobile can have multiple persons
+- **Class registration:** user pays advance (register API); admin can set a custom/agreed price per user (Aadhaar + class); user API shows pending amount by mobile + Aadhaar
+- **Donations:** separate from registration; anyone can donate (no need to be registered)
 
 ## Deploy targets
 
@@ -102,6 +103,11 @@ Tip: to avoid double `/api`, keep project in root and call `/api/*`.
   Body (JSON): `{ "id": 1, "total_fee": 5500 }` or `{ "id": 1, "class_name": "New Name", "is_active": false }`  
   `id` is required; at least one of `class_name`, `total_fee`, `is_active` is required.
 
+### Admin: Set agreed/negotiated fee for a user and class
+- `PUT /api/classes/agreed-fee`  
+  Body (JSON): `{ "aadhaar_number": "123456789012", "class_id": 1, "agreed_fee": 3500 }`  
+  Use when the user bargains the class price; this sets the fee for that specific person (Aadhaar) and class. Remaining and pending amount are computed from this agreed fee. Can be called before or after the user’s first payment.
+
 ### Class registration (with partial payment)
 - `POST /api/classes/register-payment`
 
@@ -126,17 +132,26 @@ Use **multipart/form-data** so you can send Aadhaar documents and transaction re
 
 Allowed file types: **JPEG, PNG, WebP, PDF**. Max **5 MB** per file. Files are stored under `storage/uploads/registrations/`.
 
+**Flow:** User first registers by paying an advance (this API). Then:
+
+- **GET payment-summary** (with same mobile + Aadhaar) shows how much they paid and how much is pending. Different users can use the same mobile; each is identified by Aadhaar.
+- **Admin** can change the price for that specific user via `PUT /api/classes/agreed-fee` (agreed/negotiated fee). Pending amount = agreed_fee − paid_so_far.
+
 Logic:
 
-- Users are identified by **Aadhaar number** (and class). Same mobile number can be used by multiple people (e.g. family); each person has a separate payment state per class.
-- First payment can be partial (e.g. fee 5000, paid 500).
-- Next submission with same `aadhaar_number` and same `class_id` reduces the remaining fee for that person.
+- Users are identified by **Aadhaar number** (and class). Same mobile can be used by multiple people; each has a separate payment state per class.
+- On first payment, the agreed fee defaults to the class’s `total_fee`; admin can override it via agreed-fee API.
+- First payment can be partial (e.g. agreed 5000, paid 500). Next submission with same `aadhaar_number` and `class_id` reduces the remaining amount for that person.
 - Overpayment is rejected. Status returned as `partial` or `paid`.
 
-### Payment summary by mobile
-- `GET /api/classes/payment-summary?mobile=9876543210`
+### User: Pending amount / payment summary (mobile + Aadhaar)
+- `GET /api/classes/payment-summary?mobile=9876543210&aadhaar_number=123456789012`
 
-Returns one row per person (Aadhaar) per class for that mobile; each row includes `aadhaar_number`, `class_id`, `paid_amount`, `remaining_amount`, and `payment_status`.
+Both query params are required: `mobile` (10–15 digits) and `aadhaar_number` (12 digits). Returns one row per class the user has registered for. Each row includes `agreed_fee` (price for this user), `paid_amount`, `remaining_amount`, `pending_amount` (amount still to pay), and `payment_status`. Use this so the user can see what they have paid and what is pending.
+
+### Donations (separate from class registration)
+
+Donations are a separate concept: anyone can donate even if they are not registered for a class.
 
 ### Donation submit (with documents)
 - `POST /api/donations`
@@ -158,9 +173,18 @@ Allowed file types: **JPEG, PNG, WebP, PDF**. Max file size: **5 MB** per file (
 Uploaded files are stored under `storage/uploads/donations/`. Response includes `donation_id`, `amount_paid`, and stored paths for the three documents.
 
 ### Donation history
-- `GET /api/donations?mobile=9876543210`
+- `GET /api/donations?mobile=9876543210&aadhaar_number=123456789012`
 
-Returns donations for that mobile, including `aadhaar_front_path`, `aadhaar_back_path`, `transaction_rep_path` (relative paths for stored docs).
+Both query params are required: `mobile` (10–15 digits) and `aadhaar_number` (12 digits). Returns donations for that person, including `aadhaar_front_path`, `aadhaar_back_path`, `transaction_rep_path` (relative paths for stored docs).
+
+### Admin: registrations and donations (no mobile or Aadhaar)
+
+Admins can list all registrations and all donations **directly** without providing mobile or Aadhaar:
+
+- **GET /api/admin/registrations** — all registrations (optional: search, status, limit, offset, start_date, end_date)
+- **GET /api/admin/donations** — all donations (optional: search, status, limit, offset, start_date, end_date)
+
+No query params are required; call with no params to get everything (paginated by limit/offset). See the Admin Dashboard APIs section in the OpenAPI spec (`/api/openapi.json`) for full list of admin endpoints.
 
 ### Existing database: run migrations
 
@@ -185,3 +209,13 @@ If you created tables before adding new columns, run the matching migration in y
 
 - **SQLite:** `database/migrations/add_aadhaar_number_sqlite.sql`
 - **MySQL:** `database/migrations/add_aadhaar_number_mysql.sql`
+
+**Agreed fee per user per class (class_user_fees)**
+
+- **SQLite:** `database/migrations/add_class_user_fees_sqlite.sql`
+- **MySQL:** `database/migrations/add_class_user_fees_mysql.sql`
+
+**Donation status (pending, verified, rejected)**
+
+- **SQLite:** `database/migrations/add_donations_status_sqlite.sql`
+- **MySQL:** `database/migrations/add_donations_status_mysql.sql`

@@ -78,16 +78,253 @@ final class ClassPaymentRepository
                 c.id AS class_id,
                 c.class_name,
                 c.total_fee,
+                COALESCE(cuf.agreed_fee, c.total_fee) AS agreed_fee,
                 COALESCE(SUM(cp.amount_paid), 0) AS paid_amount,
-                (c.total_fee - COALESCE(SUM(cp.amount_paid), 0)) AS remaining_amount
+                (COALESCE(cuf.agreed_fee, c.total_fee) - COALESCE(SUM(cp.amount_paid), 0)) AS remaining_amount
              FROM class_payments cp
              JOIN classes c ON c.id = cp.class_id
+             LEFT JOIN class_user_fees cuf ON cuf.aadhaar_number = cp.aadhaar_number AND cuf.class_id = cp.class_id
              WHERE cp.mobile = :mobile AND c.is_active = 1
-             GROUP BY cp.aadhaar_number, cp.class_id, c.id, c.class_name, c.total_fee
+             GROUP BY cp.aadhaar_number, cp.class_id, c.id, c.class_name, c.total_fee, cuf.agreed_fee
              ORDER BY c.id ASC, cp.aadhaar_number'
         );
         $stmt->execute(['mobile' => $mobile]);
 
+        return $stmt->fetchAll();
+    }
+
+    public function summaryByMobileAndAadhaar(string $mobile, string $aadhaarNumber): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT
+                cp.aadhaar_number,
+                c.id AS class_id,
+                c.class_name,
+                c.total_fee,
+                COALESCE(cuf.agreed_fee, c.total_fee) AS agreed_fee,
+                COALESCE(SUM(cp.amount_paid), 0) AS paid_amount,
+                (COALESCE(cuf.agreed_fee, c.total_fee) - COALESCE(SUM(cp.amount_paid), 0)) AS remaining_amount
+             FROM class_payments cp
+             JOIN classes c ON c.id = cp.class_id
+             LEFT JOIN class_user_fees cuf ON cuf.aadhaar_number = cp.aadhaar_number AND cuf.class_id = cp.class_id
+             WHERE cp.mobile = :mobile AND cp.aadhaar_number = :aadhaar_number AND c.is_active = 1
+             GROUP BY cp.aadhaar_number, cp.class_id, c.id, c.class_name, c.total_fee, cuf.agreed_fee
+             ORDER BY c.id ASC'
+        );
+        $stmt->execute(['mobile' => $mobile, 'aadhaar_number' => $aadhaarNumber]);
+
+        return $stmt->fetchAll();
+    }
+
+    /** Admin: total amount collected from class payments. Optional date filter on created_at. */
+    public function totalCollected(?string $startDate = null, ?string $endDate = null): float
+    {
+        $where = ['1=1'];
+        $bind = [];
+        if ($startDate !== null && $startDate !== '') {
+            $where[] = 'created_at >= :start_date';
+            $bind['start_date'] = $startDate;
+        }
+        if ($endDate !== null && $endDate !== '') {
+            $where[] = 'created_at <= :end_date';
+            $bind['end_date'] = $endDate . ' 23:59:59';
+        }
+        $sql = 'SELECT COALESCE(SUM(amount_paid), 0) AS total FROM class_payments WHERE ' . implode(' AND ', $where);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($bind);
+        return (float) ($stmt->fetch()['total'] ?? 0);
+    }
+
+    /** Admin: total pending amount (agreed_fee - paid) per (aadhaar, class), summed. */
+    public function totalPendingAmount(?string $startDate = null, ?string $endDate = null): float
+    {
+        $dateFilter = '';
+        $bind = [];
+        if ($startDate !== null && $startDate !== '') {
+            $dateFilter .= ' AND cp.created_at >= :start_date';
+            $bind['start_date'] = $startDate;
+        }
+        if ($endDate !== null && $endDate !== '') {
+            $dateFilter .= ' AND cp.created_at <= :end_date';
+            $bind['end_date'] = $endDate . ' 23:59:59';
+        }
+        $sql = 'SELECT SUM(agreed_fee - paid) AS total FROM (
+            SELECT COALESCE(cuf.agreed_fee, c.total_fee) AS agreed_fee,
+                   COALESCE(SUM(cp.amount_paid), 0) AS paid
+            FROM class_payments cp
+            JOIN classes c ON c.id = cp.class_id
+            LEFT JOIN class_user_fees cuf ON cuf.aadhaar_number = cp.aadhaar_number AND cuf.class_id = cp.class_id
+            WHERE 1=1 ' . $dateFilter . '
+            GROUP BY cp.aadhaar_number, cp.class_id, c.id, cuf.agreed_fee, c.total_fee
+        ) t WHERE (agreed_fee - paid) > 0';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($bind);
+        return (float) ($stmt->fetch()['total'] ?? 0);
+    }
+
+    /** Admin: count distinct registrations (aadhaar, class_id) from class_payments. */
+    public function countRegistrations(?string $startDate = null, ?string $endDate = null): int
+    {
+        $where = ['1=1'];
+        $bind = [];
+        if ($startDate !== null && $startDate !== '') {
+            $where[] = 'created_at >= :start_date';
+            $bind['start_date'] = $startDate;
+        }
+        if ($endDate !== null && $endDate !== '') {
+            $where[] = 'created_at <= :end_date';
+            $bind['end_date'] = $endDate . ' 23:59:59';
+        }
+        $sql = 'SELECT COUNT(*) AS c FROM (SELECT 1 FROM class_payments WHERE ' . implode(' AND ', $where) . ' GROUP BY aadhaar_number, class_id) t';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($bind);
+        return (int) ($stmt->fetch()['c'] ?? 0);
+    }
+
+    /** Admin: count (aadhaar, class) where remaining <= 0 (fully paid). */
+    public function countCompletedRegistrations(?string $startDate = null, ?string $endDate = null): int
+    {
+        $dateFilter = '';
+        $bind = [];
+        if ($startDate !== null && $startDate !== '') {
+            $dateFilter .= ' AND cp.created_at >= :start_date';
+            $bind['start_date'] = $startDate;
+        }
+        if ($endDate !== null && $endDate !== '') {
+            $dateFilter .= ' AND cp.created_at <= :end_date';
+            $bind['end_date'] = $endDate . ' 23:59:59';
+        }
+        $sql = "SELECT COUNT(*) AS c FROM (
+            SELECT cp.aadhaar_number, cp.class_id,
+                   COALESCE(cuf.agreed_fee, c.total_fee) - COALESCE(SUM(cp.amount_paid), 0) AS rem
+            FROM class_payments cp
+            JOIN classes c ON c.id = cp.class_id
+            LEFT JOIN class_user_fees cuf ON cuf.aadhaar_number = cp.aadhaar_number AND cuf.class_id = cp.class_id
+            WHERE 1=1 " . $dateFilter . "
+            GROUP BY cp.aadhaar_number, cp.class_id, c.id, cuf.agreed_fee, c.total_fee
+        ) t WHERE rem <= 0";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($bind);
+        return (int) ($stmt->fetch()['c'] ?? 0);
+    }
+
+    /**
+     * Admin: list registrations with search and status filter.
+     * @param array{search?: string, status?: string, limit?: int, offset?: int, start_date?: string, end_date?: string} $params
+     */
+    public function listRegistrationsForAdmin(array $params): array
+    {
+        $search = isset($params['search']) ? trim((string) $params['search']) : '';
+        $status = isset($params['status']) ? trim((string) $params['status']) : '';
+        $limit = min(max((int) ($params['limit'] ?? 50), 1), 200);
+        $offset = max((int) ($params['offset'] ?? 0), 0);
+        $startDate = $params['start_date'] ?? null;
+        $endDate = $params['end_date'] ?? null;
+
+        $bind = [];
+        $having = '';
+        if ($status === 'completed') {
+            $having = ' HAVING remaining <= 0';
+        } elseif ($status === 'partial') {
+            $having = ' HAVING remaining > 0 AND paid_amount > 0';
+        } elseif ($status === 'pending') {
+            $having = ' HAVING paid_amount = 0';
+        }
+        $dateFilter = '';
+        if ($startDate !== null && $startDate !== '') {
+            $dateFilter .= ' AND cp.created_at >= :start_date';
+            $bind['start_date'] = $startDate;
+        }
+        if ($endDate !== null && $endDate !== '') {
+            $dateFilter .= ' AND cp.created_at <= :end_date';
+            $bind['end_date'] = $endDate . ' 23:59:59';
+        }
+        $searchFilter = '';
+        if ($search !== '') {
+            $searchFilter = ' AND (cp.name LIKE :search OR cp.mobile LIKE :search2 OR cp.location LIKE :search3 OR c.class_name LIKE :search4)';
+            $bind['search'] = '%' . $search . '%';
+            $bind['search2'] = '%' . $search . '%';
+            $bind['search3'] = '%' . $search . '%';
+            $bind['search4'] = '%' . $search . '%';
+        }
+        $sql = "SELECT cp.aadhaar_number, cp.class_id, MAX(cp.name) AS name, MAX(cp.mobile) AS mobile,
+                MAX(cp.location) AS location, MAX(cp.preferred_time) AS preferred_time,
+                c.class_name, COALESCE(cuf.agreed_fee, c.total_fee) AS agreed_fee,
+                COALESCE(SUM(cp.amount_paid), 0) AS paid_amount,
+                (COALESCE(cuf.agreed_fee, c.total_fee) - COALESCE(SUM(cp.amount_paid), 0)) AS remaining_amount
+                FROM class_payments cp
+                JOIN classes c ON c.id = cp.class_id
+                LEFT JOIN class_user_fees cuf ON cuf.aadhaar_number = cp.aadhaar_number AND cuf.class_id = cp.class_id
+                WHERE c.is_active = 1 " . $dateFilter . $searchFilter . "
+                GROUP BY cp.aadhaar_number, cp.class_id, c.id, c.class_name, cuf.agreed_fee, c.total_fee" . $having . "
+                ORDER BY MAX(cp.created_at) DESC LIMIT " . $limit . " OFFSET " . $offset;
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($bind);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Admin: total count of registrations with same filters as listRegistrationsForAdmin.
+     * @param array{search?: string, status?: string, start_date?: string, end_date?: string} $params
+     */
+    public function countRegistrationsForAdmin(array $params): int
+    {
+        $search = isset($params['search']) ? trim((string) $params['search']) : '';
+        $status = isset($params['status']) ? trim((string) $params['status']) : '';
+        $startDate = $params['start_date'] ?? null;
+        $endDate = $params['end_date'] ?? null;
+        $bind = [];
+        $having = '';
+        if ($status === 'completed') {
+            $having = ' HAVING remaining <= 0';
+        } elseif ($status === 'partial') {
+            $having = ' HAVING remaining > 0 AND paid_amount > 0';
+        } elseif ($status === 'pending') {
+            $having = ' HAVING paid_amount = 0';
+        }
+        $dateFilter = '';
+        if ($startDate !== null && $startDate !== '') {
+            $dateFilter .= ' AND cp.created_at >= :start_date';
+            $bind['start_date'] = $startDate;
+        }
+        if ($endDate !== null && $endDate !== '') {
+            $dateFilter .= ' AND cp.created_at <= :end_date';
+            $bind['end_date'] = $endDate . ' 23:59:59';
+        }
+        $searchFilter = '';
+        if ($search !== '') {
+            $searchFilter = ' AND (cp.name LIKE :search OR cp.mobile LIKE :search2 OR cp.location LIKE :search3 OR c.class_name LIKE :search4)';
+            $bind['search'] = '%' . $search . '%';
+            $bind['search2'] = '%' . $search . '%';
+            $bind['search3'] = '%' . $search . '%';
+            $bind['search4'] = '%' . $search . '%';
+        }
+        $sql = "SELECT COUNT(*) AS c FROM (
+            SELECT cp.aadhaar_number, cp.class_id,
+                   COALESCE(cuf.agreed_fee, c.total_fee) - COALESCE(SUM(cp.amount_paid), 0) AS remaining,
+                   COALESCE(SUM(cp.amount_paid), 0) AS paid_amount
+            FROM class_payments cp
+            JOIN classes c ON c.id = cp.class_id
+            LEFT JOIN class_user_fees cuf ON cuf.aadhaar_number = cp.aadhaar_number AND cuf.class_id = cp.class_id
+            WHERE c.is_active = 1 " . $dateFilter . $searchFilter . "
+            GROUP BY cp.aadhaar_number, cp.class_id, c.id, cuf.agreed_fee, c.total_fee" . $having . "
+        ) t";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($bind);
+        return (int) ($stmt->fetch()['c'] ?? 0);
+    }
+
+    /** Admin: recent registration payments (last N). */
+    public function recentRegistrationActivities(int $limit = 20): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT cp.id, cp.name, cp.mobile, cp.aadhaar_number, cp.class_id, cp.amount_paid, cp.payment_status, cp.created_at,
+                    c.class_name
+             FROM class_payments cp
+             JOIN classes c ON c.id = cp.class_id
+             ORDER BY cp.created_at DESC LIMIT ' . (int) $limit
+        );
+        $stmt->execute();
         return $stmt->fetchAll();
     }
 }

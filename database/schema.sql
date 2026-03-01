@@ -34,6 +34,20 @@ ON class_payments (mobile, class_id);
 CREATE INDEX IF NOT EXISTS idx_class_payments_aadhaar_class
 ON class_payments (aadhaar_number, class_id);
 
+CREATE TABLE IF NOT EXISTS class_user_fees (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    aadhaar_number TEXT NOT NULL,
+    class_id INTEGER NOT NULL,
+    agreed_fee NUMERIC NOT NULL CHECK(agreed_fee > 0),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(aadhaar_number, class_id),
+    FOREIGN KEY (class_id) REFERENCES classes(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_class_user_fees_aadhaar_class
+ON class_user_fees (aadhaar_number, class_id);
+
 CREATE TABLE IF NOT EXISTS donations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -41,6 +55,7 @@ CREATE TABLE IF NOT EXISTS donations (
     aadhaar_number TEXT NOT NULL,
     amount_paid NUMERIC NOT NULL CHECK(amount_paid > 0),
     transaction_id TEXT NULL,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'verified', 'rejected')),
     aadhaar_front_path TEXT NULL,
     aadhaar_back_path TEXT NULL,
     transaction_rep_path TEXT NULL,
