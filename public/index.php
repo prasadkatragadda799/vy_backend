@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/../src/bootstrap.php';
 
+use App\Controllers\ClassController;
 use App\Controllers\ClassRegistrationController;
 use App\Controllers\DonationController;
 use App\Core\ExceptionHandler;
@@ -23,6 +24,7 @@ use App\Core\Router;
 
 $router = new Router();
 $classController = new ClassRegistrationController();
+$classCrudController = new ClassController();
 $donationController = new DonationController();
 
 $router->get('/', static function (): void {
@@ -66,6 +68,8 @@ $router->get('/openapi.json', static function (): void {
 });
 
 $router->get('/api/classes', [$classController, 'listClasses']);
+$router->post('/api/classes', [$classCrudController, 'createClass']);
+$router->put('/api/classes', [$classCrudController, 'updateClass']);
 $router->post('/api/classes/register-payment', [$classController, 'registerPayment']);
 $router->get('/api/classes/payment-summary', [$classController, 'paymentSummary']);
 

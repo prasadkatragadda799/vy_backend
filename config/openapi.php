@@ -96,6 +96,103 @@ return [
                     ],
                 ],
             ],
+            ],
+        'post' => [
+                'summary' => 'Create class',
+                'description' => 'Create a new class with name and amount (total_fee).',
+                'operationId' => 'createClass',
+                'requestBody' => [
+                    'required' => true,
+                    'content' => [
+                        'application/json' => [
+                            'schema' => [
+                                'type' => 'object',
+                                'required' => ['class_name', 'total_fee'],
+                                'properties' => [
+                                    'class_name' => ['type' => 'string', 'description' => 'Display name of the class'],
+                                    'total_fee' => ['type' => 'number', 'description' => 'Amount to be paid for this class', 'minimum' => 0.01],
+                                    'is_active' => ['type' => 'boolean', 'description' => 'Whether class is available for registration', 'default' => true],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                'responses' => [
+                    '201' => [
+                        'description' => 'Created',
+                        'content' => [
+                            'application/json' => [
+                                'schema' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'success' => ['type' => 'boolean'],
+                                        'message' => ['type' => 'string'],
+                                        'data' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'id' => ['type' => 'integer'],
+                                                'class_name' => ['type' => 'string'],
+                                                'total_fee' => ['type' => 'number'],
+                                                'is_active' => ['type' => 'boolean'],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                    '422' => ['description' => 'Validation failed'],
+                ],
+            ],
+        'put' => [
+                'summary' => 'Update class',
+                'description' => 'Update class name, amount (total_fee), or active status. Send at least one field.',
+                'operationId' => 'updateClass',
+                'requestBody' => [
+                    'required' => true,
+                    'content' => [
+                        'application/json' => [
+                            'schema' => [
+                                'type' => 'object',
+                                'required' => ['id'],
+                                'properties' => [
+                                    'id' => ['type' => 'integer', 'description' => 'Class ID to update'],
+                                    'class_name' => ['type' => 'string', 'description' => 'New display name'],
+                                    'total_fee' => ['type' => 'number', 'description' => 'New amount', 'minimum' => 0.01],
+                                    'is_active' => ['type' => 'boolean', 'description' => 'Whether class is available'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                'responses' => [
+                    '200' => [
+                        'description' => 'OK',
+                        'content' => [
+                            'application/json' => [
+                                'schema' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'success' => ['type' => 'boolean'],
+                                        'message' => ['type' => 'string'],
+                                        'data' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'id' => ['type' => 'integer'],
+                                                'class_name' => ['type' => 'string'],
+                                                'total_fee' => ['type' => 'number'],
+                                                'is_active' => ['type' => 'boolean'],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                    '404' => ['description' => 'Class not found'],
+                    '422' => ['description' => 'Validation failed'],
+                ],
+            ],
         ],
         '/api/classes/register-payment' => [
             'post' => [

@@ -21,6 +21,11 @@ final class Router
         $this->routes['POST'][$path] = $handler;
     }
 
+    public function put(string $path, callable $handler): void
+    {
+        $this->routes['PUT'][$path] = $handler;
+    }
+
     public function dispatch(Request $request): void
     {
         $handler = $this->routes[$request->method][$request->path] ?? null;

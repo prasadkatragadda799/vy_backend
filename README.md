@@ -92,6 +92,16 @@ Tip: to avoid double `/api`, keep project in root and call `/api/*`.
 ### Classes list (dropdown data)
 - `GET /api/classes`
 
+### Create class
+- `POST /api/classes`  
+  Body (JSON): `{ "class_name": "Mind Power - 1st Level", "total_fee": 4000, "is_active": true }`  
+  `class_name` and `total_fee` (positive number) are required; `is_active` defaults to `true`.
+
+### Update class (change amount / name / active)
+- `PUT /api/classes`  
+  Body (JSON): `{ "id": 1, "total_fee": 5500 }` or `{ "id": 1, "class_name": "New Name", "is_active": false }`  
+  `id` is required; at least one of `class_name`, `total_fee`, `is_active` is required.
+
 ### Class registration (with partial payment)
 - `POST /api/classes/register-payment`
 
