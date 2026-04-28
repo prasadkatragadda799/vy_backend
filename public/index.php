@@ -18,6 +18,8 @@ use App\Controllers\AdminDashboardController;
 use App\Controllers\ClassController;
 use App\Controllers\ClassRegistrationController;
 use App\Controllers\DonationController;
+use App\Controllers\HealingFormController;
+use App\Controllers\YogaFormController;
 use App\Core\ExceptionHandler;
 use App\Core\Request;
 use App\Core\Response;
@@ -27,6 +29,8 @@ $router = new Router();
 $classController = new ClassRegistrationController();
 $classCrudController = new ClassController();
 $donationController = new DonationController();
+$healingFormController = new HealingFormController();
+$yogaFormController = new YogaFormController();
 $adminController = new AdminDashboardController();
 
 $router->get('/', static function (): void {
@@ -91,12 +95,17 @@ $router->get('/api/classes/payment-summary', [$classController, 'paymentSummary'
 
 $router->post('/api/donations', [$donationController, 'store']);
 $router->get('/api/donations', [$donationController, 'listByMobile']);
+$router->post('/api/healing-form/submissions', [$healingFormController, 'submit']);
+$router->get('/api/healing-form/submissions', [$healingFormController, 'listByMobile']);
+$router->post('/api/yoga-form/submissions', [$yogaFormController, 'submit']);
+$router->get('/api/yoga-form/submissions', [$yogaFormController, 'listByMobile']);
 
 $router->get('/api/admin/dashboard', [$adminController, 'dashboard']);
 $router->get('/api/admin/course-distribution', [$adminController, 'courseDistribution']);
 $router->get('/api/admin/recent-activity', [$adminController, 'recentActivity']);
 $router->get('/api/admin/registrations', [$adminController, 'listRegistrations']);
 $router->get('/api/admin/donations', [$adminController, 'listDonations']);
+$router->get('/api/admin/healing-submissions', [$adminController, 'listHealingSubmissions']);
 $router->get('/api/admin/donations/summary', [$adminController, 'donationsSummary']);
 $router->put('/api/admin/donations/status', [$adminController, 'updateDonationStatus']);
 

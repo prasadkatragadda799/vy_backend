@@ -8,13 +8,15 @@ use App\Core\HttpException;
 use App\Repositories\ClassPaymentRepository;
 use App\Repositories\ClassRepository;
 use App\Repositories\DonationRepository;
+use App\Repositories\HealingFormRepository;
 
 final class AdminDashboardService
 {
     public function __construct(
         private readonly ClassRepository $classRepository = new ClassRepository(),
         private readonly ClassPaymentRepository $paymentRepository = new ClassPaymentRepository(),
-        private readonly DonationRepository $donationRepository = new DonationRepository()
+        private readonly DonationRepository $donationRepository = new DonationRepository(),
+        private readonly HealingFormRepository $healingFormRepository = new HealingFormRepository()
     ) {
     }
 
@@ -128,6 +130,17 @@ final class AdminDashboardService
     {
         $list = $this->donationRepository->listForAdmin($params);
         $total = $this->donationRepository->countForAdmin($params);
+        return ['list' => $list, 'total' => $total];
+    }
+
+    /**
+     * Admin list healing form submissions with search, issue_type filter, and pagination.
+     * @param array{search?: string, issue_type?: string, limit?: int, offset?: int, start_date?: string, end_date?: string} $params
+     */
+    public function listHealingSubmissions(array $params = []): array
+    {
+        $list = $this->healingFormRepository->listForAdmin($params);
+        $total = $this->healingFormRepository->countForAdmin($params);
         return ['list' => $list, 'total' => $total];
     }
 

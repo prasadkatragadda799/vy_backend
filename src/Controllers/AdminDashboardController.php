@@ -79,6 +79,21 @@ final class AdminDashboardController
         Response::json(['success' => true, 'data' => $result['list'], 'total' => $result['total']]);
     }
 
+    /** GET /api/admin/healing-submissions - list with search and issue type filter. Query: search, issue_type, limit, offset, start_date, end_date. */
+    public function listHealingSubmissions(Request $request): void
+    {
+        $params = [
+            'search' => $request->query['search'] ?? '',
+            'issue_type' => $request->query['issue_type'] ?? '',
+            'limit' => $request->query['limit'] ?? 50,
+            'offset' => $request->query['offset'] ?? 0,
+            'start_date' => $request->query['start_date'] ?? null,
+            'end_date' => $request->query['end_date'] ?? null,
+        ];
+        $result = $this->service->listHealingSubmissions($params);
+        Response::json(['success' => true, 'data' => $result['list'], 'total' => $result['total']]);
+    }
+
     /** GET /api/admin/donations/summary - total amount, verified/pending/rejected counts. Query: start_date, end_date (optional). */
     public function donationsSummary(Request $request): void
     {

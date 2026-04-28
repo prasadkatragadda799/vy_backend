@@ -1,0 +1,31 @@
+CREATE TABLE IF NOT EXISTS yoga_form_submissions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    author_name VARCHAR(150) NOT NULL,
+    father_or_mother_name VARCHAR(150) NOT NULL,
+    course_name VARCHAR(150) NOT NULL,
+    year_of_learning VARCHAR(100) NULL,
+    qualification VARCHAR(255) NOT NULL,
+    previous_course VARCHAR(255) NULL,
+    sibling_details VARCHAR(255) NULL,
+    age_or_birth_date VARCHAR(100) NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    aadhaar_front_path VARCHAR(500) NOT NULL,
+    aadhaar_back_path VARCHAR(500) NOT NULL,
+    mentor_name VARCHAR(150) NULL,
+    mentor_occupation VARCHAR(150) NULL,
+    mentor_phone VARCHAR(20) NULL,
+    referrer_name VARCHAR(150) NULL,
+    referrer_phone VARCHAR(20) NULL,
+    referrer_occupation VARCHAR(150) NULL,
+    another_referrer_name VARCHAR(150) NULL,
+    another_referrer_phone VARCHAR(20) NULL,
+    another_referrer_occupation VARCHAR(150) NULL,
+    amount_paid DECIMAL(10,2) NOT NULL,
+    transaction_id VARCHAR(150) NULL,
+    transaction_receipt_path VARCHAR(500) NOT NULL,
+    additional_message TEXT NULL,
+    mobile VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_yoga_form_submissions_mobile ON yoga_form_submissions (mobile);

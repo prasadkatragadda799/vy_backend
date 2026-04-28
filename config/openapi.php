@@ -157,6 +157,129 @@ $paths['/api/donations'] = [
     ],
 ];
 
+$paths['/api/yoga-form/submissions'] = [
+    'post' => [
+        'summary' => 'Submit Vibhuti Yoga form',
+        'operationId' => 'submitYogaForm',
+        'requestBody' => [
+            'required' => true,
+            'content' => [
+                'multipart/form-data' => [
+                    'schema' => [
+                        'type' => 'object',
+                        'required' => [
+                            'author_name',
+                            'father_or_mother_name',
+                            'course_name',
+                            'qualification',
+                            'age_or_birth_date',
+                            'location',
+                            'mobile',
+                            'amount_paid',
+                            'aadhar_card_front',
+                            'aadhar_card_back',
+                            'transaction_receipt_image',
+                        ],
+                        'properties' => [
+                            'author_name' => ['type' => 'string'],
+                            'father_or_mother_name' => ['type' => 'string'],
+                            'course_name' => ['type' => 'string'],
+                            'year_of_learning' => ['type' => 'string'],
+                            'qualification' => ['type' => 'string'],
+                            'previous_course' => ['type' => 'string'],
+                            'sibling_details' => ['type' => 'string'],
+                            'age_or_birth_date' => ['type' => 'string'],
+                            'location' => ['type' => 'string'],
+                            'mentor_name' => ['type' => 'string'],
+                            'mentor_occupation' => ['type' => 'string'],
+                            'mentor_phone' => ['type' => 'string'],
+                            'referrer_name' => ['type' => 'string'],
+                            'referrer_phone' => ['type' => 'string'],
+                            'referrer_occupation' => ['type' => 'string'],
+                            'another_referrer_name' => ['type' => 'string'],
+                            'another_referrer_phone' => ['type' => 'string'],
+                            'another_referrer_occupation' => ['type' => 'string'],
+                            'amount_paid' => ['type' => 'number'],
+                            'transaction_id' => ['type' => 'string'],
+                            'additional_message' => ['type' => 'string'],
+                            'mobile' => ['type' => 'string', 'description' => '10-15 digits'],
+                            'aadhar_card_front' => ['type' => 'string', 'format' => 'binary'],
+                            'aadhar_card_back' => ['type' => 'string', 'format' => 'binary'],
+                            'transaction_receipt_image' => ['type' => 'string', 'format' => 'binary'],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        'responses' => ['201' => ['description' => 'Created'], '422' => ['description' => 'Validation failed']],
+    ],
+    'get' => [
+        'summary' => 'List form submissions by mobile',
+        'operationId' => 'listYogaFormSubmissions',
+        'parameters' => [
+            ['name' => 'mobile', 'in' => 'query', 'required' => true, 'schema' => ['type' => 'string'], 'description' => 'Mobile number (10-15 digits)'],
+        ],
+        'responses' => ['200' => ['description' => 'OK'], '422' => ['description' => 'Missing or invalid mobile']],
+    ],
+];
+
+$paths['/api/healing-form/submissions'] = [
+    'post' => [
+        'summary' => 'Submit healing registration form',
+        'operationId' => 'submitHealingForm',
+        'requestBody' => [
+            'required' => true,
+            'content' => [
+                'multipart/form-data' => [
+                    'schema' => [
+                        'type' => 'object',
+                        'required' => [
+                            'full_name',
+                            'date_of_birth',
+                            'mobile',
+                            'aadhaar_number',
+                            'amount_paid',
+                            'declaration_accepted',
+                            'aadhar_card_front',
+                            'aadhar_card_back',
+                            'transaction_receipt_image',
+                        ],
+                        'properties' => [
+                            'full_name' => ['type' => 'string'],
+                            'date_of_birth' => ['type' => 'string', 'description' => 'dd/mm/yyyy or ISO date'],
+                            'time_of_birth' => ['type' => 'string'],
+                            'place_of_birth' => ['type' => 'string'],
+                            'current_location' => ['type' => 'string'],
+                            'mobile' => ['type' => 'string', 'description' => '10-15 digits'],
+                            'email' => ['type' => 'string'],
+                            'address' => ['type' => 'string'],
+                            'aadhaar_number' => ['type' => 'string', 'description' => '12-digit Aadhaar number'],
+                            'issue_type' => ['type' => 'string'],
+                            'issue_description' => ['type' => 'string'],
+                            'declaration_accepted' => ['type' => 'boolean'],
+                            'amount_paid' => ['type' => 'number'],
+                            'transaction_id' => ['type' => 'string'],
+                            'aadhar_card_front' => ['type' => 'string', 'format' => 'binary'],
+                            'aadhar_card_back' => ['type' => 'string', 'format' => 'binary'],
+                            'current_picture' => ['type' => 'string', 'format' => 'binary'],
+                            'transaction_receipt_image' => ['type' => 'string', 'format' => 'binary'],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        'responses' => ['201' => ['description' => 'Created'], '422' => ['description' => 'Validation failed']],
+    ],
+    'get' => [
+        'summary' => 'List healing form submissions by mobile',
+        'operationId' => 'listHealingFormSubmissions',
+        'parameters' => [
+            ['name' => 'mobile', 'in' => 'query', 'required' => true, 'schema' => ['type' => 'string'], 'description' => 'Mobile number (10-15 digits)'],
+        ],
+        'responses' => ['200' => ['description' => 'OK'], '422' => ['description' => 'Missing or invalid mobile']],
+    ],
+];
+
 $paths['/api/admin/dashboard'] = [
     'get' => [
         'summary' => 'Admin dashboard overview and payment summary',
@@ -211,6 +334,23 @@ $paths['/api/admin/donations'] = [
         'parameters' => [
             ['name' => 'search', 'in' => 'query', 'description' => 'Search by name, phone, transaction ID'],
             ['name' => 'status', 'in' => 'query', 'schema' => ['type' => 'string', 'enum' => ['all', 'pending', 'verified', 'rejected']]],
+            ['name' => 'limit', 'in' => 'query', 'schema' => ['type' => 'integer']],
+            ['name' => 'offset', 'in' => 'query', 'schema' => ['type' => 'integer']],
+            ['name' => 'start_date', 'in' => 'query', 'schema' => ['type' => 'string', 'format' => 'date']],
+            ['name' => 'end_date', 'in' => 'query', 'schema' => ['type' => 'string', 'format' => 'date']],
+        ],
+        'responses' => ['200' => ['description' => 'data (list), total']],
+    ],
+];
+
+$paths['/api/admin/healing-submissions'] = [
+    'get' => [
+        'summary' => 'Admin list all healing form submissions',
+        'description' => 'Returns all healing submissions directly. Optional search and filters supported.',
+        'operationId' => 'adminListHealingSubmissions',
+        'parameters' => [
+            ['name' => 'search', 'in' => 'query', 'description' => 'Search by name, phone, Aadhaar, transaction ID, issue details'],
+            ['name' => 'issue_type', 'in' => 'query', 'description' => 'Filter by selected issue type'],
             ['name' => 'limit', 'in' => 'query', 'schema' => ['type' => 'integer']],
             ['name' => 'offset', 'in' => 'query', 'schema' => ['type' => 'integer']],
             ['name' => 'start_date', 'in' => 'query', 'schema' => ['type' => 'string', 'format' => 'date']],
