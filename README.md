@@ -11,6 +11,7 @@ Production-style layered PHP backend with:
 
 ## Deploy targets
 
+- **AWS** — ECS Fargate or App Runner via Docker + ECR (templates in `aws/`).
 - **Render** — Docker deploy with `render.yaml`; bind to `PORT`; use external MySQL.
 - **Hostinger** — Apache + `.htaccess`; doc root `public/` or subfolder; MySQL from hPanel.
 - **Local** — `php -S localhost:8080 -t public` or Docker.
@@ -62,6 +63,47 @@ Copy `.env.example` to `.env` and set values. All config can also be set via env
 
 - **Disk:** Render’s filesystem is ephemeral. Uploaded files (donations/registrations) are lost on redeploy. For production, plan to use external file storage (e.g. S3) and wire paths in config later.
 - **Database:** Use MySQL (or compatible) and run the schema + seed SQL manually after first deploy.
+
+## Deploy on AWS
+
+This project now ships with AWS-ready Docker runtime and templates:
+
+- `Dockerfile` uses Apache + PHP and exposes port `80`
+- health check endpoint is `/api/health`
+- `aws/task-definition.json` is an ECS Fargate task definition template
+- `aws/apprunner.yaml` is an App Runner config template
+
+### Option A: ECS Fargate (recommended)
+
+1. Create an ECR repository (for example `vy-backend`).
+2. Build and push image:
+   - `docker build -t vy-backend:latest .`
+   - tag/push to your ECR URI (`<account>.dkr.ecr.<region>.amazonaws.com/vy-backend:latest`)
+3. Store DB secrets in AWS Systems Manager Parameter Store:
+   - `/vy-backend/DB_HOST`
+   - `/vy-backend/DB_DATABASE`
+   - `/vy-backend/DB_USERNAME`
+   - `/vy-backend/DB_PASSWORD`
+4. Update placeholders in `aws/task-definition.json`:
+   - `<account-id>`, `<region>`, execution/task role ARNs, image URI.
+5. Register the task definition and create/update ECS service behind an ALB.
+6. Set ALB target group health check path to `/api/health`.
+
+### Option B: App Runner
+
+1. Push this repo to GitHub.
+2. In AWS App Runner, create service from source code or from ECR image.
+3. If using source code mode, point to `aws/apprunner.yaml`.
+4. Add runtime environment variables:
+   - `DB_DRIVER=mysql`, `DB_PORT=3306`, `DB_CHARSET=utf8mb4`
+   - `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` (from App Runner secrets or SSM).
+5. Deploy and verify: `GET /api/health`.
+
+### AWS production notes
+
+- Container filesystem is ephemeral, so uploads in `storage/uploads/*` are not durable.
+- For real production, move uploaded files to S3 (or EFS) and persist only file URLs/keys in DB.
+- Use RDS MySQL (or Aurora MySQL-compatible) and run `database/schema_mysql.sql` and `database/seed_classes.sql` once.
 
 ## Hostinger Deployment Steps
 

@@ -1,0 +1,24 @@
+version: 1.0
+runtime: docker
+build:
+  commands:
+    build:
+      - echo "Using Dockerfile from repository root"
+run:
+  network:
+    port: 80
+    env: PORT
+  health-check:
+    path: /api/health
+    protocol: HTTP
+    interval: 10
+    timeout: 5
+    healthy-threshold: 1
+    unhealthy-threshold: 5
+  env:
+    - name: DB_DRIVER
+      value: mysql
+    - name: DB_PORT
+      value: "3306"
+    - name: DB_CHARSET
+      value: utf8mb4

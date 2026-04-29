@@ -1,22 +1,23 @@
-# Render-ready PHP API (PHP built-in server on PORT)
-# Use -cli-bookworm; php:8.2-slim can be missing on some registries
-FROM php:8.2-cli-bookworm
+# AWS-friendly Apache + PHP image
+FROM php:8.2-apache-bookworm
 
-# PDO MySQL for external DB; SQLite is included in PHP
-RUN apt-get update && apt-get install -y --no-install-recommends default-libmysqlclient-dev \
+# Install required extensions and utilities
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends default-libmysqlclient-dev curl \
     && docker-php-ext-install pdo_mysql \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && a2enmod rewrite \
+    && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+WORKDIR /var/www/html
+COPY . /var/www/html
 
-COPY . /app
+# Serve from /public and keep uploads writable for runtime user.
+RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf \
+    && mkdir -p /var/www/html/storage/uploads/donations /var/www/html/storage/uploads/registrations \
+    && chown -R www-data:www-data /var/www/html/storage \
+    && chmod -R 775 /var/www/html/storage
 
-# Ensure storage exists and is writable (ephemeral on Render; use external storage in production)
-RUN mkdir -p storage/uploads/donations storage/uploads/registrations \
-    && chmod -R 775 storage
+EXPOSE 80
 
-# Render sets PORT (e.g. 10000). Bind to 0.0.0.0 to accept external requests.
-ENV PORT=8080
-EXPOSE 8080
-
-CMD ["sh", "-c", "php -S 0.0.0.0:${PORT} -t public"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -fsS http://localhost/api/health || exit 1
