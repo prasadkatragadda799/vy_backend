@@ -12,6 +12,7 @@ Production-style layered PHP backend with:
 ## Deploy targets
 
 - **AWS** — ECS Fargate or App Runner via Docker + ECR (templates in `aws/`).
+- **Railway** — Docker deploy using `Dockerfile.railway` + `railway.json`; use MySQL service.
 - **Render** — Docker deploy with `render.yaml`; bind to `PORT`; use external MySQL.
 - **Hostinger** — Apache + `.htaccess`; doc root `public/` or subfolder; MySQL from hPanel.
 - **Local** — `php -S localhost:8080 -t public` or Docker.
@@ -104,6 +105,41 @@ This project now ships with AWS-ready Docker runtime and templates:
 - Container filesystem is ephemeral, so uploads in `storage/uploads/*` are not durable.
 - For real production, move uploaded files to S3 (or EFS) and persist only file URLs/keys in DB.
 - Use RDS MySQL (or Aurora MySQL-compatible) and run `database/schema_mysql.sql` and `database/seed_classes.sql` once.
+
+## Deploy on Railway
+
+This repo includes Railway-ready config:
+
+- `Dockerfile.railway` (PHP runtime that binds to Railway `PORT`)
+- `railway.json` (forces Docker build + healthcheck path)
+
+### Step-by-step
+
+1. Push code to GitHub.
+2. In Railway, click **New Project** -> **Deploy from GitHub Repo**.
+3. Select this repository. Railway will auto-detect `railway.json` and build via `Dockerfile.railway`.
+4. Add a MySQL database:
+   - **New** -> **Database** -> **MySQL**.
+5. In your app service **Variables**, set:
+   - `DB_DRIVER=mysql`
+   - `DB_HOST=<MYSQLHOST from Railway MySQL service>`
+   - `DB_PORT=<MYSQLPORT from Railway MySQL service>`
+   - `DB_DATABASE=<MYSQLDATABASE>`
+   - `DB_USERNAME=<MYSQLUSER>`
+   - `DB_PASSWORD=<MYSQLPASSWORD>`
+   - `DB_CHARSET=utf8mb4`
+6. Redeploy the app service.
+7. Run DB initialization once (Railway MySQL query console or external client):
+   - `database/schema_mysql.sql`
+   - `database/seed_classes.sql`
+8. Verify health:
+   - `GET https://<your-railway-domain>/api/health`
+
+### Production notes for Railway
+
+- Keep `DB_DRIVER=mysql` in production.
+- Railway filesystem is ephemeral, so uploaded docs under `storage/uploads/*` are not durable across restarts/redeploys.
+- For long-term production durability, move uploads to object storage (S3-compatible) and store only keys/URLs in DB.
 
 ## Hostinger Deployment Steps
 
