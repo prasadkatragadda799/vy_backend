@@ -51,6 +51,9 @@ ON class_user_fees (aadhaar_number, class_id);
 CREATE TABLE IF NOT EXISTS donations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    email TEXT NULL,
+    place TEXT NULL,
+    donation_category TEXT NULL,
     mobile TEXT NOT NULL,
     aadhaar_number TEXT NOT NULL,
     amount_paid NUMERIC NOT NULL CHECK(amount_paid > 0),
@@ -59,6 +62,7 @@ CREATE TABLE IF NOT EXISTS donations (
     aadhaar_front_path TEXT NULL,
     aadhaar_back_path TEXT NULL,
     transaction_rep_path TEXT NULL,
+    individual_photo_path TEXT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

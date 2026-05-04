@@ -50,6 +50,9 @@ CREATE INDEX idx_class_user_fees_aadhaar_class ON class_user_fees (aadhaar_numbe
 CREATE TABLE IF NOT EXISTS donations (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
+    email VARCHAR(255) NULL,
+    place VARCHAR(255) NULL,
+    donation_category VARCHAR(150) NULL,
     mobile VARCHAR(20) NOT NULL,
     aadhaar_number VARCHAR(20) NOT NULL,
     amount_paid DECIMAL(10,2) NOT NULL,
@@ -58,6 +61,7 @@ CREATE TABLE IF NOT EXISTS donations (
     aadhaar_front_path VARCHAR(500) NULL,
     aadhaar_back_path VARCHAR(500) NULL,
     transaction_rep_path VARCHAR(500) NULL,
+    individual_photo_path VARCHAR(500) NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
