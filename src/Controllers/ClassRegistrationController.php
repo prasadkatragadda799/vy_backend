@@ -90,6 +90,28 @@ final class ClassRegistrationController
         ]);
     }
 
+    public function verifyRegistration(Request $request): void
+    {
+        $validated = Validator::validate($request->query, [
+            'mobile' => 'required|mobile',
+            'aadhaar_number' => 'required|aadhaar',
+            'class_id' => 'required|numeric',
+        ]);
+        $classId = (int) $validated['class_id'];
+        if ($classId < 1) {
+            throw new HttpException('Query param "class_id" must be a positive integer.', 422);
+        }
+
+        Response::json([
+            'success' => true,
+            'data' => $this->service->verifyRegistrationForClass(
+                (string) $validated['mobile'],
+                (string) $validated['aadhaar_number'],
+                $classId
+            ),
+        ]);
+    }
+
     /** Admin: set negotiated/agreed fee for a specific user (aadhaar) and class. */
     public function putAgreedFee(Request $request): void
     {
