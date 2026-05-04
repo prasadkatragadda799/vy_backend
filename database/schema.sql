@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS healing_form_submissions (
     aadhaar_number TEXT NOT NULL,
     aadhaar_front_path TEXT NOT NULL,
     aadhaar_back_path TEXT NOT NULL,
+    star_name TEXT NULL,
     issue_type TEXT NULL,
     issue_description TEXT NULL,
     current_picture_path TEXT NULL,
