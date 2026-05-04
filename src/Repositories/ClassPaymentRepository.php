@@ -49,6 +49,23 @@ final class ClassPaymentRepository
         return (bool) $stmt->fetchColumn();
     }
 
+    public function findLatestRegistrantNameByMobileAndAadhaar(string $mobile, string $aadhaarNumber): ?string
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT name FROM class_payments
+             WHERE mobile = :mobile AND aadhaar_number = :aadhaar_number
+             ORDER BY id DESC
+             LIMIT 1'
+        );
+        $stmt->execute([
+            'mobile' => $mobile,
+            'aadhaar_number' => $aadhaarNumber,
+        ]);
+
+        $name = $stmt->fetchColumn();
+        return $name === false ? null : (string) $name;
+    }
+
     public function totalPaidByMobileAndClass(string $mobile, int $classId): float
     {
         $stmt = $this->pdo->prepare(

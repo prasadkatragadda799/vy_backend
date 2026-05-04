@@ -112,6 +112,22 @@ final class ClassRegistrationController
         ]);
     }
 
+    public function lookupUser(Request $request): void
+    {
+        $validated = Validator::validate($request->body ?? [], [
+            'mobile' => 'required|mobile',
+            'aadhaar_number' => 'required|aadhaar',
+        ]);
+
+        Response::json([
+            'success' => true,
+            'data' => $this->service->lookupRegisteredUser(
+                (string) $validated['mobile'],
+                (string) $validated['aadhaar_number']
+            ),
+        ]);
+    }
+
     /** Admin: set negotiated/agreed fee for a specific user (aadhaar) and class. */
     public function putAgreedFee(Request $request): void
     {

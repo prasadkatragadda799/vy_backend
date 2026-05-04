@@ -132,6 +132,29 @@ $paths['/api/classes/registration-verify'] = [
     ],
 ];
 
+$paths['/api/classes/lookup-user'] = [
+    'post' => [
+        'summary' => 'Lookup registered user by mobile and Aadhaar',
+        'operationId' => 'lookupRegisteredUser',
+        'requestBody' => [
+            'required' => true,
+            'content' => [
+                'application/json' => [
+                    'schema' => [
+                        'type' => 'object',
+                        'required' => ['mobile', 'aadhaar_number'],
+                        'properties' => [
+                            'mobile' => ['type' => 'string', 'description' => 'Mobile number (10-15 digits)'],
+                            'aadhaar_number' => ['type' => 'string', 'description' => '12-digit Aadhaar number'],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        'responses' => ['200' => ['description' => 'User found or not found'], '422' => ['description' => 'Validation failed']],
+    ],
+];
+
 $paths['/api/donations'] = [
     'post' => [
         'summary' => 'Submit donation',

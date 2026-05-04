@@ -232,6 +232,27 @@ final class ClassRegistrationService
         ];
     }
 
+    /**
+     * @return array{found: bool, name: ?string, message: string}
+     */
+    public function lookupRegisteredUser(string $mobile, string $aadhaarNumber): array
+    {
+        $name = $this->paymentRepository->findLatestRegistrantNameByMobileAndAadhaar($mobile, $aadhaarNumber);
+        if ($name === null) {
+            return [
+                'found' => false,
+                'name' => null,
+                'message' => 'User not found.',
+            ];
+        }
+
+        return [
+            'found' => true,
+            'name' => $name,
+            'message' => 'User found.',
+        ];
+    }
+
     private function assertNoCrossIdentityConflictForClass(int $classId, string $mobile, string $aadhaarNumber): void
     {
         $pairs = $this->paymentRepository->distinctIdentitiesForClassByMobileOrAadhaar($classId, $mobile, $aadhaarNumber);

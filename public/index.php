@@ -98,6 +98,7 @@ $router->put('/api/classes/agreed-fee', [$classController, 'putAgreedFee']);
 $router->post('/api/classes/register-payment', [$classController, 'registerPayment']);
 $router->get('/api/classes/payment-summary', [$classController, 'paymentSummary']);
 $router->get('/api/classes/registration-verify', [$classController, 'verifyRegistration']);
+$router->post('/api/classes/lookup-user', [$classController, 'lookupUser']);
 
 $router->post('/api/donations', [$donationController, 'store']);
 $router->get('/api/donations/verify-eligibility', [$donationController, 'verifyDonationEligibility']);
