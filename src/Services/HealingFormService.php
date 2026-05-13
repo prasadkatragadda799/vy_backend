@@ -40,7 +40,7 @@ final class HealingFormService
         $aadhaarFrontPath = $this->storeFileFromAliases($files, ['aadhaar_front', 'aadhar_card_front'], false);
         $aadhaarBackPath = $this->storeFileFromAliases($files, ['aadhaar_back', 'aadhar_card_back'], false);
         $receiptPath = $this->storeFileFromAliases($files, ['fee_receipt', 'transaction_receipt_image'], true);
-        $currentPicturePath = $this->storeFileFromAliases($files, ['recent_picture', 'current_picture'], true);
+        $currentPicturePath = $this->storeFileFromAliases($files, ['recent_picture', 'current_picture'], false);
 
         $id = $this->repository->create([
             'full_name' => $payload['full_name'],
